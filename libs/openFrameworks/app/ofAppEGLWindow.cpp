@@ -287,8 +287,6 @@ EGLContext ofAppEGLWindow::getEglContext() const {
 	return eglContext;
 }
 
-#ifndef TARGET_RASPBERRY_PI
-//------------------------------------------------------------
 Display* ofAppEGLWindow::getX11Display(){
 	return x11Display;
 }
@@ -297,7 +295,6 @@ Display* ofAppEGLWindow::getX11Display(){
 Window ofAppEGLWindow::getX11Window(){
 	return x11Window;
 }
-#endif
 //------------------------------------------------------------
 EGLConfig ofAppEGLWindow::getEglConfig() const {
 	return eglConfig;
@@ -315,16 +312,10 @@ EGLint ofAppEGLWindow::getEglVersionMinor() const {
 
 //------------------------------------------------------------
 void ofAppEGLWindow::initNative() {
-#ifdef TARGET_RASPBERRY_PI
-	initRPiNative();
-#endif
 }
 
 //------------------------------------------------------------
 void ofAppEGLWindow::exitNative() {
-#ifdef TARGET_RASPBERRY_PI
-	exitRPiNative();
-#endif
 }
 
 //------------------------------------------------------------
@@ -337,12 +328,8 @@ EGLNativeWindowType ofAppEGLWindow::getNativeWindow()  {
 	if(isUsingX11) {
 		return (EGLNativeWindowType)x11Window;
 	} else {
-#ifdef TARGET_RASPBERRY_PI
-		return (EGLNativeWindowType)&dispman_native_window;
-#else
 		ofLogNotice("ofAppEGLWindow") << "getNativeWindow(): no native window type for this system, perhaps try X11?";
 		return NULL;
-#endif
 	}
 }
 
@@ -356,12 +343,8 @@ EGLNativeDisplayType ofAppEGLWindow::getNativeDisplay() {
 	if(isUsingX11) {
 		return (EGLNativeDisplayType)x11Display;
 	} else {
-#ifdef TARGET_RASPBERRY_PI
-		return (EGLNativeDisplayType)NULL;
-#else
 		ofLogNotice("ofAppEGLWindow") << "getNativeDisplay(): no native window type for this system, perhaps try X11?";
 		return 0;
-#endif
 	}
 }
 
@@ -426,16 +409,6 @@ void ofAppEGLWindow::setup(const ofAppEGLWindowSettings & _settings) {
 			ofLogError("ofAppEGLWindow") << "init(): X11 window requested, but X11 is not available";
 		}
 	}
-
-	////////////////
-	// TODO remove the following ifdef once x11 is accelerated on RPI
-#ifdef TARGET_RASPBERRY_PI
-	if(isUsingX11) {
-		isUsingX11 = false;
-		ofLogWarning("ofAppEGLWindow") << "init(): X11 not availble on RPI yet, using a native window instead";
-	}
-#endif
-	////////////////
 
 	initNative();
 
@@ -758,22 +731,7 @@ bool ofAppEGLWindow::destroyWindow() {
 			XDestroyWindow(x11Display,x11Window); // or XCloseWindow?
 			XFree(x11Screen);
 		} else {
-#ifdef TARGET_RASPBERRY_PI
-			dispman_update = vc_dispmanx_update_start(0);
-			if (dispman_element != DISPMANX_NO_HANDLE) {
-				vc_dispmanx_element_remove(dispman_update, dispman_element);
-				dispman_element = DISPMANX_NO_HANDLE;
-			}
-
-			vc_dispmanx_update_submit_sync(dispman_update);
-
-			if (dispman_display != DISPMANX_NO_HANDLE) {
-				vc_dispmanx_display_close(dispman_display);
-				dispman_display = DISPMANX_NO_HANDLE;
-			}
-#else
 	ofLogNotice("ofAppEGLWindow") << "destroyWindow(): no native window type for this system, perhaps try X11?";
-#endif
 		}
 
 	} else {
@@ -942,45 +900,7 @@ void ofAppEGLWindow::setWindowRect(const ofRectangle& requestedWindowRect) {
 				currentWindowRect = newRect;
 			}
 		} else {
-#ifdef TARGET_RASPBERRY_PI
-
-			VC_RECT_T dst_rect;
-			dst_rect.x = (int32_t)newRect.x;
-			dst_rect.y = (int32_t)newRect.y;
-			dst_rect.width = (int32_t)newRect.width;
-			dst_rect.height = (int32_t)newRect.height;
-
-			VC_RECT_T src_rect;
-			src_rect.x = 0;
-			src_rect.y = 0;
-			src_rect.width = (int32_t)newRect.width << 16;
-			src_rect.height = (int32_t)newRect.height << 16;
-
-			DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
-
-			vc_dispmanx_element_change_attributes(dispman_update,
-					dispman_element,
-					ELEMENT_CHANGE_SRC_RECT|ELEMENT_CHANGE_DEST_RECT, // we do both when resizing
-					0, // layer (we aren't changing it here)
-					0, // opactiy (we aren't changing it here)
-					&dst_rect,
-					&src_rect,
-					0, // mask (we aren't changing it here)
-					(DISPMANX_TRANSFORM_T)0);
-
-
-			vc_dispmanx_update_submit_sync(dispman_update);
-
-			// next time swapBuffers is called, it will be resized based on this eglwindow size data
-			dispman_native_window.element = dispman_element;
-			dispman_native_window.width = (int32_t)newRect.width;
-			dispman_native_window.height = (int32_t)newRect.height; // don't forget!
-
-			currentWindowRect = newRect;
-
-#else
 			ofLogError("ofAppEGLWindow") << "createEGLWindow(): no native window type for this system, perhaps try X11?";
-#endif
 		}
 
 		if(oldWindowRect.width  != currentWindowRect.width || oldWindowRect.height != currentWindowRect.height) {
@@ -996,12 +916,8 @@ bool ofAppEGLWindow::createWindow(const ofRectangle& requestedWindowRect) {
 	if(isUsingX11) {
 		return createX11NativeWindow(requestedWindowRect);
 	} else {
-#ifdef TARGET_RASPBERRY_PI
-		return createRPiNativeWindow(requestedWindowRect);
-#else
 		ofLogError("ofAppEGLWindow") << "createEGLWindow(): no native window type for this system, perhaps try X11?";
 		return false;
-#endif
 	}
 }
 
@@ -1097,16 +1013,7 @@ glm::vec2 ofAppEGLWindow::getScreenSize(){
 		}
 
 	} else {
-#ifdef TARGET_RASPBERRY_PI
-		int success = graphics_get_display_size(settings.screenNum, &screenWidth, &screenHeight);
-		if(success < 0) {
-			ofLogError("ofAppEGLWindow") << "getScreenSize(): tried to get display size but failed";
-		}
-
-#else
 		ofLogError("ofAppEGLWindow") << "getScreenSize(): no native window type for this system, perhaps try X11?";
-#endif
-
 	}
 
 	return {screenWidth, screenHeight};
@@ -1165,41 +1072,7 @@ void ofAppEGLWindow::setWindowPosition(int x, int y){
 			nonFullscreenWindowRect = currentWindowRect;
 		}
 	} else {
-#ifdef TARGET_RASPBERRY_PI
-
-		// keep it in bounds
-		auto screenSize = getScreenSize();
-		x = ofClamp(x, 0, screenSize.x - currentWindowRect.width);
-		y = ofClamp(y, 0, screenSize.y - currentWindowRect.height);
-
-		VC_RECT_T dst_rect;
-		dst_rect.x = (int32_t)x;
-		dst_rect.y = (int32_t)y;
-		dst_rect.width = (int32_t)currentWindowRect.width;
-		dst_rect.height = (int32_t)currentWindowRect.height;
-
-		dispman_update = vc_dispmanx_update_start(0);
-
-		vc_dispmanx_element_change_attributes(dispman_update,
-				dispman_native_window.element,
-				ELEMENT_CHANGE_DEST_RECT,
-				0,
-				0,
-				&dst_rect,
-				NULL,
-				0,
-				(DISPMANX_TRANSFORM_T)0);
-
-
-vc_dispmanx_update_submit_sync(dispman_update);
-
-currentWindowRect.x = x;
-currentWindowRect.y = y;
-nonFullscreenWindowRect = currentWindowRect;
-
-#else
 	ofLogError("ofAppEGLWindow") << "setWindowPosition(): no native window type for this system, perhaps try X11?";
-#endif
 	}
 
 }
@@ -1226,12 +1099,7 @@ void ofAppEGLWindow::setWindowShape(int w, int h){
 			nonFullscreenWindowRect = currentWindowRect;
 		}
 	} else {
-#ifdef TARGET_RASPBERRY_PI
-		setWindowRect(ofRectangle(currentWindowRect.x,currentWindowRect.y,w,h));
-		nonFullscreenWindowRect = currentWindowRect;
-#else
 		ofLogError("ofAppEGLWindow") << "setWindowPosition(): no native window type for this system, perhaps try X11?";
-#endif
 	}
 }
 
@@ -1836,110 +1704,6 @@ void ofAppEGLWindow::readNativeInputEvents(){
 	}
 }
 
-#ifdef TARGET_RASPBERRY_PI
-//------------------------------------------------------------
-void ofAppEGLWindow::initRPiNative() {
-	bcm_host_init();
-
-	memset(&dispman_native_window, 0x0, sizeof(EGL_DISPMANX_WINDOW_T));
-	dispman_element = DISPMANX_NO_HANDLE;
-	dispman_display = DISPMANX_NO_HANDLE;
-	dispman_update  = DISPMANX_NO_HANDLE;
-	memset(&dispman_clamp, 0x0, sizeof(DISPMANX_CLAMP_T));
-	dispman_transform = DISPMANX_NO_ROTATE;
-	memset(&dispman_alpha, 0x0, sizeof(VC_DISPMANX_ALPHA_T)); // zero dispman_alpha
-
-}
-
-//------------------------------------------------------------
-void ofAppEGLWindow::exitRPiNative() {
-	bcm_host_deinit();
-}
-
-//------------------------------------------------------------
-bool ofAppEGLWindow::createRPiNativeWindow(const ofRectangle& requestedWindowRect){
-
-	ofRectangle screenRect = getScreenRect();
-
-	// make sure our requested window rectangle does not exceed the native
-	// screen size, or start outside of it.
-	ofRectangle windowRect = screenRect.getIntersection(requestedWindowRect);
-
-	ofLogNotice("ofAppEGLWindow") << "setupRPiNativeWindow(): screenRect: " << screenRect.width << "x" << screenRect.height;
-	ofLogNotice("ofAppEGLWindow") << "setupRPiNativeWindow(): windowRect: " << windowRect.width << "x" << windowRect.height;
-
-	//////////////////////////
-	VC_RECT_T dst_rect;
-
-	dst_rect.x = (int32_t)windowRect.x;
-	dst_rect.y = (int32_t)windowRect.y;
-	dst_rect.width = (int32_t)windowRect.width;
-	dst_rect.height = (int32_t)windowRect.height;
-
-	VC_RECT_T src_rect;
-
-	src_rect.x = 0;
-	src_rect.y = 0;
-	src_rect.width  = dst_rect.width << 16;
-	src_rect.height = dst_rect.height << 16;
-
-	memset(&dispman_alpha, 0x0, sizeof(VC_DISPMANX_ALPHA_T)); // zero dispman_alpha
-	dispman_alpha.flags = DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
-	dispman_alpha.opacity = ofClamp(settings.eglWindowOpacity,0,255);
-	dispman_alpha.mask = 0;
-
-	memset(&dispman_clamp, 0x0, sizeof(DISPMANX_CLAMP_T));
-
-	// there are other values for dispman_transform, but they do not seem to have an effect
-	dispman_transform = DISPMANX_NO_ROTATE;
-
-	// get the zero display
-	dispman_display = vc_dispmanx_display_open(settings.screenNum);
-
-	// begin the display manager interaction
-	dispman_update  = vc_dispmanx_update_start( 0 );
-
-	// add a "display manager element" with our parameters so
-	// that it can fill in the structures.  we will pass this
-	// filled dispman_element to our native window, which will
-	// be used to construct the EGL surface, etc.
-	dispman_element = vc_dispmanx_element_add ( dispman_update,
-			dispman_display,
-			settings.layer, // layer
-			&dst_rect, // dst rect
-			(DISPMANX_RESOURCE_HANDLE_T)0, // src
-			&src_rect, // src rect
-			DISPMANX_PROTECTION_NONE, // ?
-			&dispman_alpha, // alpha
-			&dispman_clamp, // clamp
-			dispman_transform // transform
-	);
-
-	if(dispman_element == DISPMANX_NO_HANDLE) {
-		ofLogError("ofAppEGLWindow") << "setupRPiNativeWindow(): dispman_element == DISPMANX_NO_HANDLE";
-		return false;
-	} else if(dispman_element == (unsigned)DISPMANX_INVALID) {
-		ofLogError("ofAppEGLWindow") << "setupRPiNativeWindow(): dispman_element == DISPMANX_INVALID";
-		return false;
-	}
-
-	// set dispman_native_window to zero
-	memset(&dispman_native_window, 0x0, sizeof(EGL_DISPMANX_WINDOW_T));
-	dispman_native_window.element = dispman_element;
-	dispman_native_window.width = (int32_t)windowRect.width;
-	dispman_native_window.height = (int32_t)windowRect.height;
-
-	// set background to black (not required)
-	vc_dispmanx_display_set_background(dispman_update, dispman_display, 0x00, 0x00, 0x00);
-
-	// finished with display manager update, so sync
-	vc_dispmanx_update_submit_sync( dispman_update );
-
-	currentWindowRect = windowRect;
-
-	return true;
-}
-#endif
 
 //------------------------------------------------------------
 // X11 BELOW

@@ -45,6 +45,8 @@ include $(OF_SHARED_MAKEFILES_PATH)/config.linux.common.mk
 
 # defines used inside openFrameworks libs.
 PLATFORM_DEFINES += TARGET_RASPBERRY_PI
+PLATFORM_DEFINES += TARGET_OPENGL
+#PLATFORM_DEFINES += TARGET_LINUX
 
 # TODO many of these are not relevant to openFrameworks (were just pasted from hello_pi examples)
 # from raspberry pi examples
@@ -134,7 +136,7 @@ PLATFORM_LIBRARIES += m
 PLATFORM_LIBRARIES += dl
 
 
-PLATFORM_LDFLAGS += -pthread
+PLATFORM_LDFLAGS += -pthread -latomic
 
 
 ################################################################################
@@ -184,7 +186,7 @@ PLATFORM_LIBRARY_SEARCH_PATHS += $(RPI_ROOT)/opt/vc/lib
 ################################################################################
 
 #PLATFORM_PKG_CONFIG_LIBRARIES += gstreamer-egl-$(GST_VERSION)
-PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/app/ofAppGLFWWindow.cpp
+#PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/app/ofAppGLFWWindow.cpp
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/sound/ofFmodSoundPlayer.cpp
 
 ifeq ($(CROSS_COMPILING),1)

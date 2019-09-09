@@ -11,15 +11,13 @@
 #include <queue>
 #include <map>
 #include <X11/Xlib.h>
+#include <EGL/egl.h>
 
 enum ofAppEGLWindowType {
 	OF_APP_WINDOW_AUTO,
 	OF_APP_WINDOW_NATIVE,
 	OF_APP_WINDOW_X11
 };
-
-typedef std::map<EGLint,EGLint> ofEGLAttributeList;
-typedef std::map<EGLint,EGLint>::iterator ofEGLAttributeListIterator;
 
 typedef struct _XIM * XIM;
 typedef struct _XIC * XIC;
@@ -33,6 +31,9 @@ typedef void *EGLDisplay;
 typedef void *EGLConfig;
 typedef void *EGLSurface;
 typedef void *EGLContext;
+
+typedef std::map<EGLint,EGLint> ofEGLAttributeList;
+typedef std::map<EGLint,EGLint>::iterator ofEGLAttributeListIterator;
 
 struct ofAppEGLWindowSettings: public ofGLESWindowSettings {
 public:
@@ -119,10 +120,8 @@ public:
 	EGLSurface getEglSurface() const;
 	EGLContext getEglContext() const;
 
-#ifndef TARGET_RASPBERRY_PI
 	Display* getX11Display();
 	Window getX11Window();
-#endif
 
 	EGLConfig getEglConfig() const;
 
@@ -224,27 +223,6 @@ protected:
 
 	EGLNativeWindowType getNativeWindow();
 	EGLNativeDisplayType getNativeDisplay();
-
-#ifdef TARGET_RASPBERRY_PI
-	void initRPiNative();
-	void exitRPiNative();
-
-	EGL_DISPMANX_WINDOW_T dispman_native_window; // rpi
-
-	DISPMANX_UPDATE_HANDLE_T dispman_update;
-	DISPMANX_ELEMENT_HANDLE_T dispman_element;
-	DISPMANX_DISPLAY_HANDLE_T dispman_display;
-
-	DISPMANX_CLAMP_T  dispman_clamp;
-	DISPMANX_TRANSFORM_T dispman_transform;
-	VC_DISPMANX_ALPHA_T	dispman_alpha;
-
-	bool createRPiNativeWindow(const ofRectangle& requestedWindowRect);
-
-#else
-	// if you are not raspberry pi, you will not be able to
-	// create a window without using x11.
-#endif
 
 	Display* x11Display;  ///< \brief Indicate which X11 display is in use (currently).
 	Screen* x11Screen;  ///< \brief Indicate which X11 screen is in use (currently).

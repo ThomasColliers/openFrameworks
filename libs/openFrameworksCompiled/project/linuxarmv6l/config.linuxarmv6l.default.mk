@@ -45,6 +45,7 @@ include $(OF_SHARED_MAKEFILES_PATH)/config.linux.common.mk
 
 # defines used inside openFrameworks libs.
 PLATFORM_DEFINES += TARGET_RASPBERRY_PI
+PLATFORM_DEFINES += TARGET_OPENGLES
 
 # TODO many of these are not relevant to openFrameworks (were just pasted from hello_pi examples)
 # from raspberry pi examples
@@ -119,15 +120,23 @@ PLATFORM_CFLAGS += -pipe
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
 
+PLATFORM_PKG_CONFIG_LIBRARIES += gl
+PLATFORM_PKG_CONFIG_LIBRARIES += glu
+PLATFORM_PKG_CONFIG_LIBRARIES += glew
+
 # raspberry pi specific
-ifneq (,$(wildcard $(RPI_ROOT)/opt/vc/lib/libGLESv2.so))
-	PLATFORM_LIBRARIES += GLESv2
-	PLATFORM_LIBRARIES += GLESv1_CM
-	PLATFORM_LIBRARIES += EGL
-else
-	PLATFORM_LIBRARIES += brcmGLESv2
-	PLATFORM_LIBRARIES += brcmEGL
-endif
+#ifneq (,$(wildcard $(RPI_ROOT)/opt/vc/lib/libGLESv2.so))
+#	PLATFORM_LIBRARIES += GLESv2
+#	PLATFORM_LIBRARIES += GLESv1_CM
+#	PLATFORM_LIBRARIES += EGL
+#else
+#	PLATFORM_LIBRARIES += brcmGLESv2
+#	PLATFORM_LIBRARIES += brcmEGL
+#endif
+PLATFORM_LIBRARIES += GLESv2
+PLATFORM_LIBRARIES += GLESv1_CM
+PLATFORM_LIBRARIES += EGL
+
 PLATFORM_LIBRARIES += openmaxil
 PLATFORM_LIBRARIES += bcm_host
 PLATFORM_LIBRARIES += vcos
@@ -136,9 +145,9 @@ PLATFORM_LIBRARIES += pcre
 PLATFORM_LIBRARIES += rt
 PLATFORM_LIBRARIES += X11
 PLATFORM_LIBRARIES += dl
+PLATFORM_LIBRARIES += glut
 
-
-PLATFORM_LDFLAGS += -pthread
+PLATFORM_LDFLAGS += -pthread -latomic
 
 
 ################################################################################
@@ -186,7 +195,7 @@ PLATFORM_LIBRARY_SEARCH_PATHS += $(RPI_ROOT)/opt/vc/lib
 #   Note: Leave a leading space when adding list items with the += operator
 ################################################################################
 
-PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/app/ofAppGLFWWindow.cpp
+#PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/app/ofAppGLFWWindow.cpp
 PLATFORM_CORE_EXCLUSIONS += $(OF_LIBS_PATH)/openFrameworks/sound/ofFmodSoundPlayer.cpp
 
 ifeq ($(CROSS_COMPILING),1)

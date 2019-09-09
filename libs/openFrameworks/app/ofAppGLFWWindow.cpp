@@ -12,7 +12,7 @@
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
-#ifdef TARGET_LINUX
+#if defined(TARGET_LINUX) || defined(TARGET_RASPBERRY_PI)
     #include "ofIcon.h"
     #include "ofImage.h"
     #define GLFW_EXPOSE_NATIVE_X11
@@ -375,7 +375,7 @@ void ofAppGLFWWindow::setup(const ofGLFWWindowSettings & _settings){
 #endif
 
 
-#ifdef TARGET_LINUX
+#if defined(TARGET_LINUX) || defined(TARGET_RASPBERRY_PI)
 	XSetLocaleModifiers("");
 	xim = XOpenIM(getX11Display(), 0, 0, 0);
 	if(!xim){
@@ -391,7 +391,7 @@ void ofAppGLFWWindow::setup(const ofGLFWWindowSettings & _settings){
 #endif
 }
 
-#ifdef TARGET_LINUX
+#if defined(TARGET_LINUX) || defined(TARGET_RASPBERRY_PI)
 //------------------------------------------------------------
 void ofAppGLFWWindow::setWindowIcon(const string & path){
 	ofPixels iconPixels;
@@ -694,7 +694,7 @@ void ofAppGLFWWindow::setFullscreen(bool fullscreen){
 		return;
 	}
 
-#ifdef TARGET_LINUX
+#if defined(TARGET_LINUX) || defined(TARGET_RASPBERRY_PI)
 #include <X11/Xatom.h>
 
 	Window nativeWin = glfwGetX11Window(windowP);
@@ -1078,7 +1078,7 @@ int glfwtToOFModifiers(int mods){
 }
 
 unsigned long keycodeToUnicode(ofAppGLFWWindow * window, int scancode, int modifier){
-#ifdef TARGET_LINUX
+#if defined(TARGET_LINUX) || defined(TARGET_RASPBERRY_PI)
 	XkbStateRec xkb_state = {};
 	XkbGetState(window->getX11Display(), XkbUseCoreKbd, &xkb_state);
 	XEvent ev = {0};
@@ -1651,7 +1651,7 @@ void ofAppGLFWWindow::makeCurrent(){
 	glfwMakeContextCurrent(windowP);
 }
 
-#if defined(TARGET_LINUX) && !defined(TARGET_RASPBERRY_PI)
+#if defined(TARGET_LINUX) || defined(TARGET_RASPBERRY_PI)
 Display* ofAppGLFWWindow::getX11Display(){
 	return glfwGetX11Display();
 }
